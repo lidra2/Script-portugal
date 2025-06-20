@@ -36,7 +36,9 @@ local function smoothMoveTo(targetCFrame, duration)
     duration = duration or 0.3
 
     while elapsed < duration do
-        if not humanoidRootPart or not humanoidRootPart.Parent then break end
+        if not humanoidRootPart or not humanoidRootPart.Parent then
+            break
+        end
         local alpha = elapsed / duration
         humanoidRootPart.CFrame = startCFrame:Lerp(targetCFrame, alpha)
         elapsed = elapsed + RunService.Heartbeat:Wait()
