@@ -1,0 +1,54 @@
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+
+-- Aguarda personagem carregar
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+
+local function getNearestFruit()
+    local nearestFruit = nil
+    local shortestDistance = math.huge
+
+    for _, fruit in pairs(workspace:GetChildren()) do
+        if fruit.Name == "Fruit" and fruit:FindFirstChild("TouchInterest") and fruit:FindFirstChild("Handle") then
+            local distance = (fruit.Handle.Position - humanoidRootPart.Position).Magnitude
+            if distance < shortestDistance and distance < 30 then
+                shortestDistance = distance
+                nearestFruit = fruit
+            end
+        end
+    end
+
+    return nearestFruit
+end
+
+local function autoFarm()
+    while true do
+        if not player.Character or not player.Character.Parent then
+            character = player.Character or player.CharacterAdded:Wait()
+            humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+        end
+
+        local fruit = getNearestFruit()
+        if fruit then
+            humanoidRootPart.CFrame = fruit.Handle.CFrame + Vector3.new(0, 3, 0)
+            task.wait(0.3)
+        else
+            task.wait(1)
+        end
+    end
+end
+
+local function antiban()
+    while true do
+        if player.Character and player.Character.Parent then
+            local randomOffset = Vector3.new(math.random(-5, 5), 0, math.random(-5, 5))
+            local targetPosition = humanoidRootPart.Position + randomOffset
+            humanoidRootPart.CFrame = CFrame.new(targetPosition)
+        end
+        task.wait(math.random(3, 7))
+    end
+end
+
+coroutine.wrap(autoFarm)()
+coroutine.wrap(antiban)()
