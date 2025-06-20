@@ -1,8 +1,16 @@
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 local player = Players.LocalPlayer
 
--- Aguarda personagem carregar
-local character = player.Character or player.CharacterAdded:Wait()
+local function getCharacter()
+    local char = player.Character
+    if not char or not char.Parent then
+        char = player.CharacterAdded:Wait()
+    end
+    return char
+end
+
+local character = getCharacter()
 local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
 
 local function getNearestFruit()
@@ -12,7 +20,7 @@ local function getNearestFruit()
     for _, fruit in pairs(workspace:GetChildren()) do
         if fruit.Name == "Fruit" and fruit:FindFirstChild("TouchInterest") and fruit:FindFirstChild("Handle") then
             local distance = (fruit.Handle.Position - humanoidRootPart.Position).Magnitude
-            if distance < shortestDistance and distance < 30 then
+            if distance < shortestDistance and distance <= 30 then
                 shortestDistance = distance
                 nearestFruit = fruit
             end
@@ -22,31 +30,48 @@ local function getNearestFruit()
     return nearestFruit
 end
 
+local function smoothMoveTo(targetCFrame, duration)
+    local startCFrame = humanoidRootPart.CFrame
+    local elapsed = 0
+    duration = duration or 0.3
+
+    while elapsed < duration do
+        if not humanoidRootPart or not humanoidRootPart.Parent then break end
+        local alpha = elapsed / duration
+        humanoidRootPart.CFrame = startCFrame:Lerp(targetCFrame, alpha)
+        elapsed = elapsed + RunService.Heartbeat:Wait()
+    end
+
+    humanoidRootPart.CFrame = targetCFrame
+end
+
 local function autoFarm()
     while true do
         if not player.Character or not player.Character.Parent then
-            character = player.Character or player.CharacterAdded:Wait()
+            character = getCharacter()
             humanoidRootPart = character:WaitForChild("HumanoidRootPart")
         end
 
         local fruit = getNearestFruit()
-        if fruit then
-            humanoidRootPart.CFrame = fruit.Handle.CFrame + Vector3.new(0, 3, 0)
-            task.wait(0.3)
+        if fruit and fruit.Handle then
+            local targetCFrame = fruit.Handle.CFrame + Vector3.new(0, 3, 0)
+            smoothMoveTo(targetCFrame, 0.3)
         else
             task.wait(1)
         end
+        task.wait(0.1)
     end
 end
 
 local function antiban()
     while true do
-        if player.Character and player.Character.Parent then
-            local randomOffset = Vector3.new(math.random(-5, 5), 0, math.random(-5, 5))
+        if humanoidRootPart and humanoidRootPart.Parent then
+            local randomOffset = Vector3.new(math.random(-5,5), 0, math.random(-5,5))
             local targetPosition = humanoidRootPart.Position + randomOffset
-            humanoidRootPart.CFrame = CFrame.new(targetPosition)
+            local targetCFrame = CFrame.new(targetPosition)
+            smoothMoveTo(targetCFrame, 0.5)
         end
-        task.wait(math.random(3, 7))
+        task.wait(math.random(3,7))
     end
 end
 
